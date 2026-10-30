@@ -1,5 +1,5 @@
 // Landing-page form receiver (Google Apps Script web app).
-// Each submission: file -> Drive folder, row -> sheet in the same folder, mail -> NOTIFY.
+// Each submission: file (or a share link for big files) -> Drive folder, row -> sheet in the same folder, mail -> NOTIFY.
 // Deploy: script.google.com > New project > paste > Deploy > New deployment > Web app,
 //         Execute as: Me, Who has access: Anyone. Copy the /exec URL into ENDPOINT in the page.
 
@@ -10,23 +10,25 @@ const NOTIFY = 'benzimraaa@gmail.com';
 function doPost(e) {
   try {
     const d = JSON.parse(e.postData.contents);
-    if (!d.data || !d.contact) return reply_({ ok: false, error: 'missing' });
-    const bytes = Utilities.base64Decode(d.data);
-    if (bytes.length > MAX_BYTES) return reply_({ ok: false, error: 'too_big' });
+    const link = String(d.link || '').slice(0, 2000);
+    if ((!d.data && !link) || !d.contact) return reply_({ ok: false, error: 'missing' });
+    if (link && !/^https?:\/\/\S+$/.test(link)) return reply_({ ok: false, error: 'bad_link' });
+    const bytes = d.data ? Utilities.base64Decode(d.data) : null;
+    if (bytes && bytes.length > MAX_BYTES) return reply_({ ok: false, error: 'too_big' });
 
     const folder = folder_();
     const stamp = Utilities.formatDate(new Date(), 'Asia/Jerusalem', 'yyyy-MM-dd HH-mm');
     const name = stamp + ' ' + String(d.fileName || 'page').slice(0, 120);
-    const file = folder.createFile(Utilities.newBlob(bytes, d.mimeType || 'application/octet-stream', name));
+    const file = bytes && folder.createFile(Utilities.newBlob(bytes, d.mimeType || 'application/octet-stream', name));
 
     const contact = String(d.contact).slice(0, 200);
     const message = String(d.message || '').slice(0, 5000);
-    sheet_(folder).appendRow([new Date(), contact, message, d.fileName || '', file.getUrl()]);
+    sheet_(folder).appendRow([new Date(), contact, message, d.fileName || '', file ? file.getUrl() : '', link]);
 
     MailApp.sendEmail({
       to: NOTIFY,
       subject: 'פנייה חדשה מדף הנחיתה: ' + contact,
-      body: 'פרטי קשר: ' + contact + '\n\nהודעה:\n' + (message || '(אין)') + '\n\nקובץ: ' + file.getUrl()
+      body: 'פרטי קשר: ' + contact + '\n\nהודעה:\n' + (message || '(אין)') + (file ? '\n\nקובץ: ' + file.getUrl() : '') + (link ? '\n\nקישור שיתוף: ' + link : '')
     });
     return reply_({ ok: true });
   } catch (err) {
@@ -42,11 +44,15 @@ function folder_() {
 function sheet_(folder) {
   const props = PropertiesService.getScriptProperties();
   const id = props.getProperty('SHEET_ID');
-  if (id) return SpreadsheetApp.openById(id).getSheets()[0];
+  if (id) {
+    const sh = SpreadsheetApp.openById(id).getSheets()[0];
+    if (!sh.getRange(1, 6).getValue()) sh.getRange(1, 6).setValue('קישור שיתוף');
+    return sh;
+  }
   const ss = SpreadsheetApp.create('פניות – עמוד חינם (רשימה)');
   DriveApp.getFileById(ss.getId()).moveTo(folder);
   const sh = ss.getSheets()[0];
-  sh.appendRow(['תאריך', 'טלפון / מייל', 'הודעה', 'שם הקובץ', 'קישור לקובץ']);
+  sh.appendRow(['תאריך', 'טלפון / מייל', 'הודעה', 'שם הקובץ', 'קישור לקובץ', 'קישור שיתוף']);
   props.setProperty('SHEET_ID', ss.getId());
   return sh;
 }

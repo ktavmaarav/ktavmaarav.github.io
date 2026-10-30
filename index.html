@@ -300,6 +300,9 @@ section{padding-block:clamp(40px,7vw,80px)}
         <label for="note">רוצים להוסיף משהו? <span style="font-weight:400;color:var(--muted)">(לא חובה)</span>
           <textarea id="note" rows="3" maxlength="5000" placeholder="למשל: מה כתב היד, כמה עמודים יש בו, מה חשוב לכם"></textarea>
         </label>
+        <label for="link">קובץ גדול או ספר שלם? הדביקו קישור שיתוף <span style="font-weight:400;color:var(--muted)">(Google Drive, Dropbox, WeTransfer)</span>
+          <input id="link" type="url" dir="ltr" placeholder="https://drive.google.com/...">
+        </label>
         <button class="btn" type="submit" style="justify-content:center">קבלו עמוד מפוענח בחינם</button>
         <p class="formmsg" id="msg" hidden></p>
       </form>
@@ -371,15 +374,18 @@ document.getElementById("f").addEventListener("submit",async ev=>{
   ev.preventDefault();
   const m=document.getElementById("msg"),btn=ev.target.querySelector("button");
   const say=t=>{m.hidden=false;m.textContent=t};
-  const f0=file.files[0],who=document.getElementById("who").value.trim();
-  if(!f0) return say("צרפו קובץ של עמוד אחד.");
+  const f0=file.files[0],who=document.getElementById("who").value.trim(),link=document.getElementById("link").value.trim();
+  if(!f0&&!link) return say("צרפו קובץ של עמוד אחד, או הדביקו קישור שיתוף.");
   if(!who) return say("כתבו טלפון או מייל, כדי שנדע לאן לשלוח את הפענוח.");
-  if(f0.size>MAX_MB*1048576) return say(`הקובץ גדול מ-${MAX_MB} MB. שלחו עמוד אחד או צילום בגודל קטן יותר.`);
+  if(link&&!/^https?:\/\/\S+$/.test(link)) return say("הקישור לא נראה תקין. העתיקו אותו שוב מכפתור השיתוף.");
+  const big=f0&&f0.size>MAX_MB*1048576;
+  if(big&&!link) return say(`הקובץ גדול מ-${MAX_MB} MB. העלו אותו ל-Google Drive, שתפו "לכל מי שיש את הקישור" והדביקו כאן את הקישור.`);
   if(!ENDPOINT) return say("הטופס עוד לא מחובר לשליחה. בינתיים שלחו את העמוד במייל שלמעלה.");
   btn.disabled=true;say("שולח…");
   try{
-    const data=await new Promise((ok,bad)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]);r.onerror=bad;r.readAsDataURL(f0)});
-    const res=await fetch(ENDPOINT,{method:"POST",body:JSON.stringify({contact:who,message:document.getElementById("note").value.trim(),fileName:f0.name,mimeType:f0.type,data})});
+    const send=f0&&!big;
+    const data=send?await new Promise((ok,bad)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]);r.onerror=bad;r.readAsDataURL(f0)}):"";
+    const res=await fetch(ENDPOINT,{method:"POST",body:JSON.stringify({contact:who,message:document.getElementById("note").value.trim(),link,fileName:send?f0.name:"",mimeType:send?f0.type:"",data})});
     const out=await res.json();
     if(!out.ok) throw new Error(out.error||"error");
     ev.target.reset();fname.textContent="בחרו קובץ או גררו לכאן";
