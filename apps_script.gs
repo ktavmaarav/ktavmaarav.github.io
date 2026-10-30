@@ -1,10 +1,11 @@
 // Landing-page form receiver (Google Apps Script web app).
-// Each submission: file -> Drive folder, row -> sheet in the same folder, mail -> the script owner.
+// Each submission: file -> Drive folder, row -> sheet in the same folder, mail -> NOTIFY.
 // Deploy: script.google.com > New project > paste > Deploy > New deployment > Web app,
 //         Execute as: Me, Who has access: Anyone. Copy the /exec URL into ENDPOINT in the page.
 
 const FOLDER_NAME = 'פניות – עמוד חינם';
 const MAX_BYTES = 20 * 1024 * 1024;
+const NOTIFY = 'benzimraaa@gmail.com';
 
 function doPost(e) {
   try {
@@ -23,7 +24,7 @@ function doPost(e) {
     sheet_(folder).appendRow([new Date(), contact, message, d.fileName || '', file.getUrl()]);
 
     MailApp.sendEmail({
-      to: Session.getEffectiveUser().getEmail(),
+      to: NOTIFY,
       subject: 'פנייה חדשה מדף הנחיתה: ' + contact,
       body: 'פרטי קשר: ' + contact + '\n\nהודעה:\n' + (message || '(אין)') + '\n\nקובץ: ' + file.getUrl()
     });

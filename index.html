@@ -365,7 +365,7 @@ file.addEventListener("change",()=>{fname.textContent=file.files[0]?file.files[0
 ["dragleave","drop"].forEach(e=>drop.addEventListener(e,()=>drop.classList.remove("over")));
 drop.addEventListener("drop",ev=>{ev.preventDefault();if(ev.dataTransfer.files[0]){file.files=ev.dataTransfer.files;file.dispatchEvent(new Event("change"))}});
 // Google Apps Script web-app URL (apps_script.gs). Empty = form not connected yet.
-const ENDPOINT="";
+const ENDPOINT="https://script.google.com/macros/s/AKfycbyK-h1cph-lZJjg4aMo7yevMPQD0euBvWlkSp-uKytXXAyFJ29wqMUVcKoSeSUZbVo_/exec";
 const MAX_MB=20;
 document.getElementById("f").addEventListener("submit",async ev=>{
   ev.preventDefault();
