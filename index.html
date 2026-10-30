@@ -366,7 +366,7 @@ file.addEventListener("change",()=>{fname.textContent=file.files[0]?file.files[0
 drop.addEventListener("drop",ev=>{ev.preventDefault();if(ev.dataTransfer.files[0]){file.files=ev.dataTransfer.files;file.dispatchEvent(new Event("change"))}});
 // Google Apps Script web-app URL (apps_script.gs). Empty = form not connected yet.
 const ENDPOINT="";
-const MAX_MB=25;
+const MAX_MB=20;
 document.getElementById("f").addEventListener("submit",async ev=>{
   ev.preventDefault();
   const m=document.getElementById("msg"),btn=ev.target.querySelector("button");
