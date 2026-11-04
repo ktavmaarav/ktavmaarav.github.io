@@ -279,7 +279,7 @@ section{padding-block:clamp(40px,7vw,80px)}
             <small>Estimate based on 2,250 characters per page. The final price follows the actual character count.</small>
           </div>
         </div>
-        <p class="smallnote">Especially difficult hands: up to +30%, set after the free page. Minimum order $31.2. Prices exclude VAT where applicable.</p>
+        <p class="smallnote">Especially difficult hands: up to +30%, set after the free page. Minimum order $30. Prices exclude VAT where applicable.</p>
       </div>
     </div>
     <div class="cta" style="margin-top:36px"><a class="btn" href="#send">Get one page transcribed free</a></div>
@@ -361,7 +361,7 @@ function calc(){
   let per=rate+(document.getElementById("proof").checked?1.9:0);
   let price=chars/1000*per;
   if(document.getElementById("rush").checked) price*=1.5;
-  if(pages>0) price=Math.max(31.2,price);
+  if(pages>0) price=Math.max(30,price);
   rows.forEach((r,i)=>r.classList.toggle("active",i===idx&&pages>0));
   document.getElementById("r-chars").textContent=`about ${fmt(chars)} characters · $${rate} per 1,000`;
   document.getElementById("r-price").textContent=pages>0?"$"+fmt(price):"—";
